@@ -5,7 +5,7 @@
  * Protocol (unchanged from the 704 design, so its tests and host code still work):
  *   1. put PC[7:0] on ui_in and the real outcome on uio_in[1]
  *   2. raise uio_in[0] (new_data_avail) for one clock
- *   3. bimodal / gshare / tournament answer on the next clock (uo_out[4], [5], [6]),
+ *   3. bimodal / gshare / tournament answer two clocks after the strobe rises (uo_out[4], [5], [6]),
  *      the perceptron answers when pred_ready (uo_out[0]) goes high, on uo_out[1]
  *   4. wait for training_done (uo_out[2]) before sending the next branch
  */
@@ -29,14 +29,19 @@ module tt_um_kyrylo_nazarevych_bp #(
         .ui_in(ui_in), .uo_out(p_uo), .uio_in(uio_in), .uio_out(p_uio_out), .uio_oe(p_uio_oe),
         .ena(ena), .clk(clk), .rst_n(rst_n));
 
-    // ---------------------------------------------------------------- new data strobe
-    wire new_data = uio_in[0];
-    wire taken    = uio_in[1];
-    reg  new_data_q;
-    always @(posedge clk) new_data_q <= rst_n ? new_data : 1'b0;
-    wire step = new_data & ~new_data_q;                 // one clock per branch
-
-    wire [BIDX-1:0] idx = ui_in[BIDX+1:2];              // PC[7:2], same >>2 as the 704 core
+    // ---------------------------------------------------------------- input registers
+    // The table predictors read the pins through flip-flops, so no table path starts at an input pin
+    // (Tiny Tapeout's input delay plus the pin fan-out made those the only paths that missed timing).
+    // It costs one clock: the table predictions are valid two clocks after the strobe rises.
+    reg [BIDX-1:0] idx;                                 // PC[7:2], same >>2 as the 704 core
+    reg taken, new_data_q, new_data_qq;
+    always @(posedge clk) begin
+        idx         <= ui_in[BIDX+1:2];
+        taken       <= uio_in[1];
+        new_data_q  <= rst_n ? uio_in[0] : 1'b0;
+        new_data_qq <= rst_n ? new_data_q : 1'b0;
+    end
+    wire step = new_data_q & ~new_data_qq;              // one clock per branch
 
     reg [GHIST-1:0] ghr;                                // newest outcome in bit 0
     always @(posedge clk or negedge rst_n)
