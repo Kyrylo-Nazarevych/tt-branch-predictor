@@ -28,6 +28,30 @@ module bp_perceptron_704 #(
 );
 
     //---------------------------------
+    //          DECLARATIONS
+    //---------------------------------
+    // Declared before first use (the pin assignments below), so every simulator accepts the file.
+    wire new_data_avail, new_data_avail_posedge;
+    wire history_buffer_request; // continuous assignment below (wire, not reg, for Verilog-2005 simulators)
+    wire direction_ground_truth;
+    wire [NUM_BITS_OF_INST_ADDR_LATCHED_IN-1:0] inst_addr;
+    reg new_data_avail_prev;
+    reg wr_en; // 0: Read, 1: Write
+    reg prediction, pred_ready, training_done;
+    reg state_rst_memory, mem_reset_done;
+    reg [1:0] state_pred;
+    reg [7:0] mem_data_in;
+    wire [7:0] mem_data_out; // driven by the latch RAM output port (wire, not reg, for Verilog-2005 simulators)
+    reg [$clog2(HISTORY_LENGTH+1+1)-1:0] cnt;
+    reg [SUM_WIDTH-1:0] sum;
+    reg [PERCEPTRON_INDEX_WIDTH-1:0] perceptron_index;
+    reg [HISTORY_LENGTH:0] history_buffer;
+    reg [MEM_ADDR_WIDTH-1:0] mem_addr;
+    reg history_buffer_empty_state, history_buffer_output;
+    reg history_buffer_request_prev;
+    reg [$clog2(HISTORY_LENGTH+1)-1:0] history_buffer_index;
+
+    //---------------------------------
     //              PINS
     //---------------------------------
     // All output pins must be assigned. If not used, assign to 0.
@@ -56,11 +80,6 @@ module bp_perceptron_704 #(
     wire [7:0] uio_oe_mem_unused, uio_out_unused;
     wire _unused = &{ena, clk, rst_n, uio_oe_mem_unused, uio_out_unused, 1'b0, uio_in[7:2], inst_addr[1:0], inst_addr[7:7-PERCEPTRON_INDEX_WIDTH+2]};
 
-    wire new_data_avail, new_data_avail_posedge;
-    wire history_buffer_request; // continuous assignment below (wire, not reg, for Verilog-2005 simulators)
-    wire direction_ground_truth;
-    wire [NUM_BITS_OF_INST_ADDR_LATCHED_IN-1:0] inst_addr;
-    reg new_data_avail_prev;
 
     assign new_data_avail = uio_in[0];
     assign direction_ground_truth = uio_in[1];
@@ -80,17 +99,6 @@ module bp_perceptron_704 #(
         The starting index (byte) of the weights for a perceptron is given by: (HISTORY_LENGTH + 1) * perceptron_index * (BIT_WIDTH_WEIGHTS/8)
     */
 
-    reg wr_en; // 0: Read, 1: Write
-    reg prediction, pred_ready, training_done;
-    reg state_rst_memory, mem_reset_done;
-    reg [1:0] state_pred;
-    reg [7:0] mem_data_in;
-    wire [7:0] mem_data_out; // driven by the latch RAM output port (wire, not reg, for Verilog-2005 simulators)
-    reg [$clog2(HISTORY_LENGTH+1+1)-1:0] cnt;
-    reg [SUM_WIDTH-1:0] sum;
-    reg [PERCEPTRON_INDEX_WIDTH-1:0] perceptron_index;
-    reg [HISTORY_LENGTH:0] history_buffer;
-    reg [MEM_ADDR_WIDTH-1:0] mem_addr;
     parameter NOT_RESETTING_MEM = 1'd0, RESETTING_MEMORY = 1'd1;
     parameter IDLE = 2'd0, COMPUTING = 2'd1, PRE_TRAINING_DELAY = 2'd2, TRAINING = 2'd3;
 
@@ -230,9 +238,6 @@ module bp_perceptron_704 #(
     /*
         Can request the history buffer to be outputted to the IOs. Useful for debugging.
     */
-    reg history_buffer_empty_state, history_buffer_output;
-    reg history_buffer_request_prev;
-    reg [$clog2(HISTORY_LENGTH+1)-1:0] history_buffer_index;
     localparam HISTORY_BUFFER_NOT_OUTPUTTING = 1'b0, HISTORY_BUFFER_OUTPUTTING = 1'b1;
 
     wire history_buffer_request_posedge;
