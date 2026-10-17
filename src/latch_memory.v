@@ -1,5 +1,17 @@
 `default_nettype none
 
+// Event simulators (Icarus, cocotb) get behavioural gates. Synthesis (Yosys defines SYNTHESIS) and
+// the lint step (run with Verilator) see the sky130 cells. -DSIM still forces the behavioural version,
+// e.g. for an FPGA build.
+`ifndef SYNTHESIS
+`ifndef VERILATOR
+`define BP_LATCH_BEHAVIOURAL
+`endif
+`endif
+`ifdef SIM
+`define BP_LATCH_BEHAVIOURAL
+`endif
+
 module bp_latch_mem #(
     parameter RAM_BYTES = 64
 ) (
@@ -79,7 +91,7 @@ module bp_latch_mem #(
   for (i = 0; i < RAM_BYTES; i = i+1) begin
     wire sel_byte = (addr_write == i);
     wire wr_en_this_byte;
-`ifdef SIM
+`ifdef BP_LATCH_BEHAVIOURAL
     assign wr_en_this_byte = wr_en && sel_byte;
 `else
     // Use an explicit and gate to minimize possibility of a glitch
@@ -119,7 +131,7 @@ module bp_latch_mem #(
       partition_sel_n <= addr_in[addr_bits-1:4] != high_addr;
     end
 
-`ifdef SIM
+`ifdef BP_LATCH_BEHAVIOURAL
     bufif0 out_buf[7:0] (combined_out, selected_out, partition_sel_n);
 `else
     sky130_fd_sc_hd__ebufn_4 lm_dt_out_buf[7:0] ( .A(selected_out), .Z(combined_out), .TE_B(partition_sel_n) );
@@ -128,7 +140,7 @@ module bp_latch_mem #(
   endgenerate
   /* verilator lint_on MULTIDRIVEN */
 
-`ifdef SIM
+`ifdef BP_LATCH_BEHAVIOURAL
   buf final_buf[7:0] (uo_out, combined_out);
 `else
   sky130_fd_sc_hd__clkbuf_4 lm_dt_final_buf[7:0] (.A(combined_out), .X(uo_out));
