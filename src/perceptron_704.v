@@ -135,9 +135,14 @@ module bp_perceptron_704 #(
             mem_data_in <= 'b0;
             // Defined from reset: training_done also enables the history shift, so an unknown
             // power-up value could shift garbage into history_buffer during the memory reset.
+            // cnt, substate and sum are always set before use, but reset them too so the core
+            // starts from a known state (gate-level simulation otherwise carries X through them).
             training_done <= 1'b0;
             pred_ready <= 1'b0;
             prediction <= 1'b0;
+            cnt <= 'd0;
+            substate <= 'd0;
+            sum <= 'd0;
         end else begin
             if (state_rst_memory == RESETTING_MEMORY) begin
                 mem_addr <= (wr_en) ? mem_addr : (mem_addr + 1);
