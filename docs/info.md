@@ -1,20 +1,11 @@
-<!---
-
-This file is used to generate your project datasheet. Please fill in the information below and delete any unused
-sections.
-
-You can also include images in this folder and reference them in the markdown. Each image must be less than
-512 kb in size, and the combined size of all images must be less than 1 MB.
--->
-
 ## How it works
 
-Explain how your project works
+Four branch predictors share one set of pins. For each branch the host puts PC[7:0] on ui_in and the real outcome on uio[1], then raises uio[0]. The bimodal, gshare and tournament predictors (64 two-bit counters each) answer one clock later on uo[4..6]. The perceptron (the TT IHP 25a #704 design: 8 perceptrons, 7-bit global history, weights in a 64-byte latch RAM) answers when uo[0] goes high, on uo[1]. All four then train on the real outcome, and uo[2] signals that the next branch can be sent.
 
 ## How to test
 
-Explain how to use your project
+After reset, wait for uo[3] (memory reset done). For each branch of a trace: set ui_in to PC[7:0] and uio[1] to taken, pulse uio[0] for one clock, read uo[4..6] on the next clock, wait for uo[0] and read uo[1], then wait for uo[2]. Compare the predictions with the outcomes to get the accuracy of each predictor.
 
 ## External hardware
 
-List external hardware used in your project (e.g. PMOD, LED display, etc), if any
+None. A microcontroller or FPGA replays a branch trace into the pins.
