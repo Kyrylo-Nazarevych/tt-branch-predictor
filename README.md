@@ -72,8 +72,7 @@ A microcontroller or an FPGA replays the trace; no other hardware is needed. Tes
 
 ## Authors and credits
 
-Ilma Kule, Kyrylo Nazarevych, Vitalii Haponenko and Märten Erik Loor (Chipatron, October 2026). Designed in
-[Vulkos](https://vulkos.co.uk).
+Kyrylo Nazarevych, Märten Erik Loor, Ilma Kule and Vitalii Haponenko (Chipathron, October 2026).
 
 - The perceptron predictor is Tiny Tapeout design #704 by Tristan Robitaille
   ([tt_branch_pred](https://github.com/TristanRobitaille/tt_branch_pred), Apache-2.0).
