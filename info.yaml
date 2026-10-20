@@ -1,7 +1,7 @@
 # Tiny Tapeout project information
 project:
   title:        "Four Branch Predictors: Perceptron, Bimodal, gshare, Tournament"      # Project title
-  author:       "Ilma Kule, Kyrylo Nazarevych, Vitalii Haponenko, Märten Erik Loor"      # Your name
+  author:       "Kyrylo Nazarevych, Märten Erik Loor, Ilma Kule, Vitalii Haponenko"      # Your name
   discord:      ""      # Your discord username, for communication and automatically assigning you a Tapeout role (optional)
   description:  "704 perceptron predictor plus bimodal, gshare and tournament predictors, scored on RISC-V branch traces"      # One line description of what your project does
   language:     "Verilog" # other examples include SystemVerilog, Amaranth, VHDL, etc
